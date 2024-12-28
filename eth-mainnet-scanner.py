@@ -36,7 +36,7 @@ def get_transactions(address):
     # Normal transactions
     normal_tx_url = make_api_url("account", "txlist", address, startblock=0, endblock=99999999, page=1, offset=10000, sort="asc")
     response_normal = get(normal_tx_url)
-    data_normal = response_normal.json()["result"]
+    transaction_data = response_normal.json()["result"]
 
     # Internal transactions
     internal_tx_url = make_api_url("account", "txlistinternal", address, startblock=0, endblock=99999999, page=1, offset=10000, sort="asc")
@@ -44,15 +44,15 @@ def get_transactions(address):
     data_internal = response_internal.json()["result"]
 
     # Concatenate normal and internal transactions
-    data_normal.extend(data_internal)
-    data_normal.sort(key=lambda x: int(x["timeStamp"]))
+    transaction_data.extend(data_internal)
+    transaction_data.sort(key=lambda x: int(x["timeStamp"]))
 
     current_balance = 0
     balances = []
     times = []
 
     # Loop through the transaction history and build a historical list of inbound and outbound ETH values
-    for tx in data_normal:
+    for tx in transaction_data:
         to_addr = tx["to"]
         from_addr = tx["from"]
         value = int(tx["value"]) / ETH_VALUE
