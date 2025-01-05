@@ -7,14 +7,34 @@ from dotenv import load_dotenv
 # Load secrets from .env file
 load_dotenv()
 
-API_KEY = os.getenv("API_ACCESS_KEY")
+API_KEY = os.getenv("ETHERSCAN_API_ACCESS_KEY")
 address = os.getenv("MY_ETH_ADDRESS")
-BASE_URL = "https://api.etherscan.io/api"
+BASE_URL = "https://api.etherscan.io/v2/api"
 ETH_VALUE = 10 ** 18
 
+transactions_chain_list_eth = {
+    "ETH-Mainnet": "1",
+    "Arbitrum One Mainnet": "42161",
+    "Base Mainnet": "8453",
+    "Blast Mainnet": "81457",
+    "Linea Mainnet": "59144",
+    "OP Mainnet": "10",
+    "Scroll Mainnet": "534352",
+    "Taiko Mainnet": "167000",
+    "zkSync Mainnet": "324"
+}
+
+transactions_chain_list_evm_others = {
+    "Avalanche C-Chain": "43114",
+    "BNB Smart Chain Mainnet": "56",
+    "Mantle Mainnet": "5000",
+    "Polygon Mainnet": "137",
+    "Polygon zkEVM Mainnet": "1101",
+}
+
 # Function used to build the API call based on which arguments are expected by the API endpoint
-def make_api_url(module, action, address, **kwargs):
-    url = BASE_URL + f"?module={module}&action={action}&address={address}&apikey={API_KEY}"
+def make_api_url(chainid, module, action, address, **kwargs):
+    url = BASE_URL + f"?chainid={chainid}&module={module}&action={action}&address={address}&apikey={API_KEY}"
 
     for key, value in kwargs.items():
         url += f"&{key}={value}"
@@ -22,8 +42,8 @@ def make_api_url(module, action, address, **kwargs):
     return url
 
 # Function used to pull the latest account balance (in ETH)
-def get_account_balance(address):
-    balance_url = make_api_url("account", "balance", address, tag="latest")
+def get_account_balance(address, chainid):
+    balance_url = make_api_url(chainid, "account", "balance", address, tag="latest")
     response = get(balance_url)
     data = response.json()
 
@@ -31,15 +51,15 @@ def get_account_balance(address):
 
     return value
 
-# Funtion used to pull all transaction history for the account (both normal and internal transactions)
+# Function used to pull all transaction history for the account (both normal and internal transactions)
 def get_transactions(address):
     # Normal transactions
-    normal_tx_url = make_api_url("account", "txlist", address, startblock=0, endblock=99999999, page=1, offset=10000, sort="asc")
+    normal_tx_url = make_api_url("1", "account", "txlist", address, startblock=0, endblock=99999999, page=1, offset=10000, sort="asc")
     response_normal = get(normal_tx_url)
     transaction_data = response_normal.json()["result"]
 
     # Internal transactions
-    internal_tx_url = make_api_url("account", "txlistinternal", address, startblock=0, endblock=99999999, page=1, offset=10000, sort="asc")
+    internal_tx_url = make_api_url("1", "account", "txlistinternal", address, startblock=0, endblock=99999999, page=1, offset=10000, sort="asc")
     response_internal = get(internal_tx_url)
     data_internal = response_internal.json()["result"]
 
@@ -77,7 +97,8 @@ def get_transactions(address):
     plt.plot(times, balances)
     plt.show()
 
-eth = get_account_balance(address)
-print(eth)
+# for chain, id in transactions_chain_list_eth.items():
+#     eth = get_account_balance(address,id)
+#     print(eth)
 
 get_transactions(address)
